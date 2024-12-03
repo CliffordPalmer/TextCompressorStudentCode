@@ -29,17 +29,59 @@
  */
 public class TextCompressor {
 
+    private static final int LETTER_STATE = 0;
+    private static final int CHAR_STATE = 1;
+    private static final int LETTER_BITS = 6;
+    private static final int LETTER_TO_CHAR_ESC = 28;
+    private static final int CHAR_TO_LETTER_ESC = 'A';
     private static void compress() {
 
         // TODO: Complete the compress() method
-
+//        while(!BinaryStdIn.isEmpty()){
+//            char nextCharacter;
+//            String nextWord = "";
+//            do{
+//                nextCharacter = BinaryStdIn.readChar();
+//                nextWord += nextCharacter;
+//            }while (nextCharacter != ' ');
+//        }
+        int state = LETTER_STATE;
+        String text = BinaryStdIn.readString();
+        int textLength = text.length();
+        BinaryStdOut.write(textLength);
+        for(int i = 0; i < textLength; i++){
+            char nextCharacter = text.charAt(i);
+            if(Character.isAlphabetic(nextCharacter)){
+                state = LETTER_STATE;
+            }
+            else{
+                state = CHAR_STATE;
+            }
+            if(state == LETTER_STATE){
+                BinaryStdOut.write(nextCharacter - 'A', 6);
+            }
+            else if(state == CHAR_STATE){
+                BinaryStdOut.write(CHAR_TO_LETTER_ESC, 6);
+                BinaryStdOut.write(nextCharacter);
+            }
+        }
         BinaryStdOut.close();
     }
 
     private static void expand() {
 
         // TODO: Complete the expand() method
-
+        int textLength = BinaryStdIn.readInt();
+        for(int i = 0; i < textLength; i++){
+            char nextCharacter = BinaryStdIn.readChar();
+            if(nextCharacter == CHAR_TO_LETTER_ESC){
+                i++;
+                BinaryStdOut.write(nextCharacter);
+            }
+            else{
+                BinaryStdOut.write();
+            }
+        }
         BinaryStdOut.close();
     }
 
