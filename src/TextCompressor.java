@@ -51,17 +51,23 @@ public class TextCompressor {
         BinaryStdOut.write(textLength);
         for(int i = 0; i < textLength; i++){
             char nextCharacter = text.charAt(i);
-            if(Character.isAlphabetic(nextCharacter)){
+            if(Character.isLetter(nextCharacter)){
+                if(state != LETTER_STATE){
+                    BinaryStdOut.write(CHAR_TO_LETTER_ESC);
+                }
                 state = LETTER_STATE;
             }
             else{
+                if(state != CHAR_STATE){
+                    BinaryStdOut.write(LETTER_TO_CHAR_ESC);
+                }
                 state = CHAR_STATE;
             }
             if(state == LETTER_STATE){
                 BinaryStdOut.write(nextCharacter - 'A', 6);
             }
             else if(state == CHAR_STATE){
-                BinaryStdOut.write(CHAR_TO_LETTER_ESC, 6);
+                BinaryStdOut.write(CHAR_TO_LETTER_ESC, 8);
                 BinaryStdOut.write(nextCharacter);
             }
         }
@@ -70,16 +76,25 @@ public class TextCompressor {
 
     private static void expand() {
 
+        int state = LETTER_STATE;
         // TODO: Complete the expand() method
         int textLength = BinaryStdIn.readInt();
         for(int i = 0; i < textLength; i++){
-            char nextCharacter = BinaryStdIn.readChar();
-            if(nextCharacter == CHAR_TO_LETTER_ESC){
+            char nextCharacter;
+            if(state == LETTER_STATE) {
+                nextCharacter = BinaryStdIn.readChar(6);
+            }
+            else{
+                nextCharacter = BinaryStdIn.readChar(8);
+            }
+            if(state == LETTER_STATE){
                 i++;
                 BinaryStdOut.write(nextCharacter);
             }
-            else{
-                BinaryStdOut.write();
+            else if(nextCharacter == CHAR_TO_LETTER_ESC){
+                state = CHAR_STATE;
+                i++;
+                BinaryStdOut.write(nextCharacter);
             }
         }
         BinaryStdOut.close();
