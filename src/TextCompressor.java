@@ -51,7 +51,7 @@ public class TextCompressor {
         BinaryStdOut.write(textLength);
         for(int i = 0; i < textLength; i++){
             char nextCharacter = text.charAt(i);
-            if(Character.isLetter(nextCharacter)){
+            if((nextCharacter >= 'A' && nextCharacter <= 'Z') || (nextCharacter >= 'a' && nextCharacter <= 'z')){
                 if(state != LETTER_STATE){
                     BinaryStdOut.write(CHAR_TO_LETTER_ESC);
                 }
