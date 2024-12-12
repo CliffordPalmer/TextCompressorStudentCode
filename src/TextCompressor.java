@@ -32,60 +32,83 @@ import java.util.ArrayList;
  */
 public class TextCompressor {
 
-    private static final int EOF = 256;
+    private static final int EOF_CHARACTER = 256;
     private static final int CODE_LENGTH = 12;
     private static final int POSSIBLE_CODES = (int)Math.pow(2, CODE_LENGTH);
 
     private static void compress() {
+        // TST for fast lookup of codes
         TST codes = new TST();
         String file = BinaryStdIn.readString();
         int fileLength = file.length();
         String prefix;
-        int codeNumber = EOF + 1;
-        int index = 0;
+        // Set the first new code to right after the EOF character
+        int codeNumber = EOF_CHARACTER + 1;
+        // Insert all single character prefixes into TST
         for(int i = 0; i < 256; i++){
             codes.insert("" + (char)i, i);
         }
+        int index = 0;
+        // Loop through file compressing into codes
         while(index < fileLength){
+            // Set the prefix to the longest possible prefix starting at index
             prefix = codes.getLongestPrefix(file, index);
+            // Write the prefix code to file
             BinaryStdOut.write(codes.lookup(prefix), CODE_LENGTH);
+            // If making a new code doesn't exceed file length
             if(index + prefix.length() + 1 < fileLength){
+                // If there are still availible codes
                 if(codeNumber < POSSIBLE_CODES) {
+                    // Create a new prefix by adding the next letter to the current prefix
                     codes.insert(prefix + file.charAt(index + prefix.length()), codeNumber);
                     codeNumber++;
                 }
             }
+            // Advance index to skip over the rest of the prefix
             index += prefix.length();
         }
-        BinaryStdOut.write(EOF, CODE_LENGTH);
+        // Write the EOF character at the end of the compressed file
+        BinaryStdOut.write(EOF_CHARACTER, CODE_LENGTH);
         BinaryStdOut.close();
     }
 
     private static void expand() {
+        // Array for constant time lookup of prefixes
         String[] prefixes = new String[POSSIBLE_CODES];
-        int codeNumber = EOF + 1;
+        // Set the first new code to one more than the EOF character
+        int codeNumber = EOF_CHARACTER + 1;
+        // Insert all one character prefixes into the array
         for(int i = 0; i < 256; i++){
             prefixes[i] = "" + (char)i;
         }
         int currentCode;
         int lookaheadCode = BinaryStdIn.readInt(CODE_LENGTH);
+        String lookaheadPrefix;
+        // Loop until reaching the EOF character
         while(true){
+            // Advance currentCode to lookaheadCode
             currentCode = lookaheadCode;
+            // Lookup the prefix and write it to the expanded file
             String prefix = prefixes[currentCode];
             BinaryStdOut.write(prefix);
-            //System.out.print(prefix);
-            String lookaheadPrefix;
+            // Read in the lookahead code
             lookaheadCode = BinaryStdIn.readInt(CODE_LENGTH);
-            if(lookaheadCode == EOF){
+            // Breaks from the loop if the next character is the EOF character
+            if(lookaheadCode == EOF_CHARACTER){
                 break;
             }
+            // If there are more available codes
             if(codeNumber < POSSIBLE_CODES){
+                // Edge case for if the lookahead prefix hasn't been built yet
                 if(prefixes[lookaheadCode] == null){
+                    // Because the lookahead prefix is built from the original prefix, the first
+                    // character of the original prefix is added to create the lookahead prefix
                     prefixes[codeNumber] = prefix + prefix.charAt(0);
                     codeNumber++;
 
                 }
                 else {
+                    // Build the next prefix/code pair from the lookahead and current prefixes
                     lookaheadPrefix = prefixes[lookaheadCode];
                     prefixes[codeNumber] = prefix + lookaheadPrefix.charAt(0);
                     codeNumber++;
