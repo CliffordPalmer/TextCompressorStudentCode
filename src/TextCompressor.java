@@ -21,6 +21,9 @@
  *  = 43.54% compression ratio!
  ******************************************************************************/
 
+
+import java.util.ArrayList;
+
 /**
  *  The {@code TextCompressor} class provides static methods for compressing
  *  and expanding natural language through textfile input.
@@ -29,72 +32,64 @@
  */
 public class TextCompressor {
 
-    private static final int LETTER_STATE = 0;
-    private static final int CHAR_STATE = 1;
-    private static final int LETTER_BITS = 6;
-    private static final int LETTER_TO_CHAR_ESC = 28;
-    private static final int CHAR_TO_LETTER_ESC = 'A';
-    private static void compress() {
+    private static final int EOF = 256;
+    private static final int CODE_LENGTH = 12;
+    private static final int POSSIBLE_CODES = (int)Math.pow(2, CODE_LENGTH);
 
-        // TODO: Complete the compress() method
-//        while(!BinaryStdIn.isEmpty()){
-//            char nextCharacter;
-//            String nextWord = "";
-//            do{
-//                nextCharacter = BinaryStdIn.readChar();
-//                nextWord += nextCharacter;
-//            }while (nextCharacter != ' ');
-//        }
-        int state = LETTER_STATE;
-        String text = BinaryStdIn.readString();
-        int textLength = text.length();
-        BinaryStdOut.write(textLength);
-        for(int i = 0; i < textLength; i++){
-            char nextCharacter = text.charAt(i);
-            if((nextCharacter >= 'A' && nextCharacter <= 'Z') || (nextCharacter >= 'a' && nextCharacter <= 'z')){
-                if(state != LETTER_STATE){
-                    BinaryStdOut.write(CHAR_TO_LETTER_ESC);
-                }
-                state = LETTER_STATE;
-            }
-            else{
-                if(state != CHAR_STATE){
-                    BinaryStdOut.write(LETTER_TO_CHAR_ESC);
-                }
-                state = CHAR_STATE;
-            }
-            if(state == LETTER_STATE){
-                BinaryStdOut.write(nextCharacter - 'A', 6);
-            }
-            else if(state == CHAR_STATE){
-                BinaryStdOut.write(CHAR_TO_LETTER_ESC, 8);
-                BinaryStdOut.write(nextCharacter);
-            }
+    private static void compress() {
+        TST codes = new TST();
+        String file = BinaryStdIn.readString();
+        int fileLength = file.length();
+        String prefix;
+        int codeNumber = EOF + 1;
+        int index = 0;
+        for(int i = 0; i < 256; i++){
+            codes.insert("" + (char)i, i);
         }
+        while(index < fileLength){
+            prefix = codes.getLongestPrefix(file, index);
+            BinaryStdOut.write(codes.lookup(prefix), CODE_LENGTH);
+            if(index + prefix.length() + 1 < fileLength){
+                if(codeNumber < POSSIBLE_CODES) {
+                    codes.insert(prefix + file.charAt(index + prefix.length()), codeNumber);
+                    codeNumber++;
+                }
+            }
+            index += prefix.length();
+        }
+        BinaryStdOut.write(EOF, CODE_LENGTH);
         BinaryStdOut.close();
     }
 
     private static void expand() {
+        String[] prefixes = new String[POSSIBLE_CODES];
+        int codeNumber = EOF + 1;
+        for(int i = 0; i < 256; i++){
+            prefixes[i] = "" + (char)i;
+        }
+        int currentCode;
+        int lookaheadCode = BinaryStdIn.readInt(CODE_LENGTH);
+        while(true){
+            currentCode = lookaheadCode;
+            String prefix = prefixes[currentCode];
+            BinaryStdOut.write(prefix);
+            //System.out.print(prefix);
+            String lookaheadPrefix;
+            lookaheadCode = BinaryStdIn.readInt(CODE_LENGTH);
+            if(lookaheadCode == EOF){
+                break;
+            }
+            if(codeNumber < POSSIBLE_CODES){
+                if(prefixes[lookaheadCode] == null){
+                    prefixes[codeNumber] = prefix + prefix.charAt(0);
+                    codeNumber++;
 
-        int state = LETTER_STATE;
-        // TODO: Complete the expand() method
-        int textLength = BinaryStdIn.readInt();
-        for(int i = 0; i < textLength; i++){
-            char nextCharacter;
-            if(state == LETTER_STATE) {
-                nextCharacter = BinaryStdIn.readChar(6);
-            }
-            else{
-                nextCharacter = BinaryStdIn.readChar(8);
-            }
-            if(state == LETTER_STATE){
-                i++;
-                BinaryStdOut.write(nextCharacter);
-            }
-            else if(nextCharacter == CHAR_TO_LETTER_ESC){
-                state = CHAR_STATE;
-                i++;
-                BinaryStdOut.write(nextCharacter);
+                }
+                else {
+                    lookaheadPrefix = prefixes[lookaheadCode];
+                    prefixes[codeNumber] = prefix + lookaheadPrefix.charAt(0);
+                    codeNumber++;
+                }
             }
         }
         BinaryStdOut.close();
